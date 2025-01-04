@@ -8,6 +8,8 @@ public class LoadTesting
     [Test]
     public void PerformLoadTest()
     {
+        ReportManager.InitializeReport();
+        ReportManager.StartTest("Client Registration Load Test");
         var clientRegisterPage = new ClientRegisterPage(baseUrl);
 
         int numberOfRequests = 100; // Total requests to send
@@ -23,8 +25,15 @@ public class LoadTesting
             // Send the registration request with the updated payload
             var response = clientRegisterPage.RegisterClient(fullName, username, email, password, phone);
 
-            // Log the status code for each request
-            Console.WriteLine($"Request #{i + 1} - Response Code: {response.StatusCode}");
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                ReportManager.LogPass($"Request #{i + 1} succeeded with status code: {response.StatusCode}");
+            }
+            else
+            {
+                ReportManager.LogFail($"Request #{i + 1} failed with status code: {response.StatusCode}");
+            }
         }
+        ReportManager.FinalizeReport();
     }
 }

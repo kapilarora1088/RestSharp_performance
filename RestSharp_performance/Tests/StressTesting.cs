@@ -9,6 +9,10 @@ public class StressTesting
     [Test]
     public void PerformStressTestOnLogin()
     {
+
+        ReportManager.InitializeReport();
+        ReportManager.StartTest("Client Login Stress Test");
+
         var clientLoginPage = new ClientLoginPage(baseUrl);
 
         int totalRequests = 1000; // Total number of requests for stress testing
@@ -27,9 +31,13 @@ public class StressTesting
                     var response = clientLoginPage.LoginClient(username, email, password);
 
                     // Log only failed requests for stress testing
-                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        Console.WriteLine($"Request Failed - Response Code: {response.StatusCode}, Content: {response.Content}");
+                        ReportManager.LogPass($"Login Request succeeded for {username}");
+                    }
+                    else
+                    {
+                        ReportManager.LogFail($"Login Request failed for {username} with status code: {response.StatusCode}");
                     }
                 }
                 catch (Exception ex)
@@ -40,5 +48,6 @@ public class StressTesting
         });
 
         Console.WriteLine("Stress Test on Login Completed.");
+        ReportManager.FinalizeReport();
     }
 }
