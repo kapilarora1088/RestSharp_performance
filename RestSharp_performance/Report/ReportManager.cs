@@ -1,12 +1,16 @@
 ﻿using AventStack.ExtentReports;
 using AventStack.ExtentReports.Reporter;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 
 public class ReportManager
 {
-    private static ExtentSparkReporter spark = new ExtentSparkReporter("Spark.html");
     private static ExtentReports _extent;
     private static ExtentTest _test;
+    private static Stopwatch _stopwatch = new Stopwatch();
+    private static int _numberOfRequests = 0;
 
     public static void InitializeReport()
     {
@@ -21,14 +25,21 @@ public class ReportManager
             Directory.CreateDirectory(reportDirectory);
         }
 
-        // Initialize the ExtentSparkReporter with the file path
-        spark = new ExtentSparkReporter(reportFilePath);
+        // Initialize ExtentReports instance
+        _extent = new ExtentReports();
+
+        // Create ExtentSparkReporter with the file path
+        var spark = new ExtentSparkReporter(reportFilePath);
         spark.Config.DocumentTitle = "Performance Test Report";
         spark.Config.ReportName = "API Performance Testing";
         //spark.Config.Theme = AventStack.ExtentReports.Reporter.Configuration.Theme.Standard; // Uncomment if needed
 
-        _extent = new ExtentReports();
+        // Attach the reporter to ExtentReports
         _extent.AttachReporter(spark);
+
+        _stopwatch.Reset();
+        _stopwatch.Start();
+        _numberOfRequests = 0;
     }
 
     public static void StartTest(string testName)
@@ -39,15 +50,25 @@ public class ReportManager
     public static void LogPass(string message)
     {
         _test.Pass(message);
+        _numberOfRequests++;
     }
 
     public static void LogFail(string message)
     {
         _test.Fail(message);
+        _numberOfRequests++;
     }
 
     public static void FinalizeReport()
     {
+        _stopwatch.Stop();
+        long elapsedMilliseconds = _stopwatch.ElapsedMilliseconds;
+        double throughput = _numberOfRequests / (elapsedMilliseconds / 1000.0);
+
+        _test.Info($"Total Requests: {_numberOfRequests}");
+        _test.Info($"Elapsed Time: {elapsedMilliseconds} ms");
+        _test.Info($"Throughput: {throughput:F2} requests/second");
+
         _extent.Flush();
     }
 }
